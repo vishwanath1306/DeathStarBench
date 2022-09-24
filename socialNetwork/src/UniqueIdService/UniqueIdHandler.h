@@ -13,6 +13,11 @@
 #include "../logger.h"
 #include "../tracing.h"
 
+
+extern "C"{
+    #include "tracer/hindsight.h"
+    #include "tracer/agentapi.h"
+}
 // Custom Epoch (January 1, 2018 Midnight GMT = 2018-01-01T00:00:00Z)
 #define CUSTOM_EPOCH 1514764800000
 
@@ -65,12 +70,14 @@ int64_t UniqueIdHandler::ComposeUniqueId(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  hindsight_begin(req_id);
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "compose_unique_id_server", {opentracing::ChildOf(parent_span->get())});
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
   _thread_lock->lock();
+
   int64_t timestamp =
       duration_cast<milliseconds>(system_clock::now().time_since_epoch())
           .count() -
@@ -103,8 +110,8 @@ int64_t UniqueIdHandler::ComposeUniqueId(
   std::string post_id_str = _machine_id + timestamp_hex + counter_hex;
   int64_t post_id = stoul(post_id_str, nullptr, 16) & 0x7FFFFFFFFFFFFFFF;
   LOG(debug) << "The post_id of the request " << req_id << " is " << post_id;
-
   span->Finish();
+  hindsight_end();
   return post_id;
 }
 

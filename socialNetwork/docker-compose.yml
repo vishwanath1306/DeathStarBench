@@ -208,15 +208,15 @@ services:
       - ./config:/social-network-microservices/config
 
   unique-id-service:
-    image: deathstarbench/social-network-microservices:latest
+    image: dsbhsinteg:latest
     hostname: unique-id-service
-    #    ports:
-    #      - 10008:9090
+    ports:
+      - 5055:5055
     restart: always
     depends_on:
       jaeger-agent:
         condition: service_started
-    entrypoint: UniqueIdService
+    command: supervisord -c /etc/supervisor_conf/UniqueIdService_supervisor.conf
     volumes:
       - ./config:/social-network-microservices/config
 
