@@ -217,6 +217,7 @@ services:
       jaeger-agent:
         condition: service_started
     command: supervisord -c /etc/supervisor_conf/UniqueIdService_supervisor.conf
+    shm_size: 8gb
     volumes:
       - ./config:/social-network-microservices/config
 
@@ -289,3 +290,17 @@ services:
     restart: always
     environment:
       - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+
+  hindsight-coordinator:
+    image: hindsight_coordinator:latest
+    hostname: hindsight_coordinator
+    ports:
+      - 5252:5252
+    restart: always
+    depends_on:
+      jaeger-agent:
+        condition: service_started
+    command: supervisord -c /etc/coordinator.conf
+    shm_size: 8gb
+    volumes:
+      - ./config:/social-network-microservices/config
