@@ -26,6 +26,11 @@
 #define CUSTOM_EPOCH 1514764800000
 #define MONGODB_TIMEOUT_MS 100
 
+extern "C"{
+  #include "tracer/hindsight.h"
+  #include "tracer/agentapi.h"
+}
+
 namespace social_network {
 
 using std::chrono::duration_cast;
@@ -123,6 +128,7 @@ void UserHandler::RegisterUserWithId(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  hindsight_begin(req_id);
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "register_user_withid_server",
@@ -225,7 +231,8 @@ void UserHandler::RegisterUserWithId(
     }
     _social_graph_client_pool->Keepalive(social_graph_client_wrapper);
   }
-
+  hindsight_trigger(req_id);
+  hindsight_end();
   span->Finish();
 }
 

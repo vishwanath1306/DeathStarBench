@@ -20,6 +20,7 @@ void sigintHandler(int sig) { exit(EXIT_SUCCESS); }
 
 int main(int argc, char *argv[]) {
   signal(SIGINT, sigintHandler);
+  hindsight_init("UserService");
   init_logger();
 
   SetUpTracer("config/jaeger-config.yml", "user-service");

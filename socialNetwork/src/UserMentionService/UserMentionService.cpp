@@ -32,6 +32,7 @@ void sigintHandler(int sig) {
 
 int main(int argc, char* argv[]) {
   signal(SIGINT, sigintHandler);
+  hindsight_init("UserMentionService");
   init_logger();
   SetUpTracer("config/jaeger-config.yml", "user-mention-service");
 

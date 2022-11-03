@@ -16,6 +16,11 @@
 #include "../logger.h"
 #include "../tracing.h"
 
+extern "C"{
+  #include "tracer/hindsight.h"
+  #include "tracer/agentapi.h"
+}
+
 using namespace sw::redis;
 
 namespace social_network {
@@ -67,6 +72,7 @@ void UserTimelineHandler::WriteUserTimeline(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  hindsight_begin(req_id);
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "write_user_timeline_server", {opentracing::ChildOf(parent_span->get())});
@@ -149,6 +155,8 @@ void UserTimelineHandler::WriteUserTimeline(
     throw err;
   }
   redis_span->Finish();
+  hindsight_trigger(req_id);
+  hindsight_end();
   span->Finish();
 }
 

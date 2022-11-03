@@ -22,6 +22,11 @@
 #include "../logger.h"
 #include "../tracing.h"
 
+extern "C"{
+  #include "tracer/hindsight.h"
+  #include "tracer/agentapi.h" 
+}
+
 namespace social_network {
 using json = nlohmann::json;
 using std::chrono::duration_cast;
@@ -369,6 +374,7 @@ void ComposePostHandler::ComposePost(
       "compose_post_server", {opentracing::ChildOf(parent_span->get())});
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  hindsight_begin(req_id);
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
   auto text_future =
@@ -437,6 +443,8 @@ void ComposePostHandler::ComposePost(
   // {
   //   throw;
   // }
+  hindsight_trigger(req_id);
+  hindsight_end();
   span->Finish();
 }
 

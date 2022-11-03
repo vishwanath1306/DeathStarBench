@@ -18,6 +18,7 @@ void sigintHandler(int sig) { exit(EXIT_SUCCESS); }
 
 int main(int argc, char *argv[]) {
   signal(SIGINT, sigintHandler);
+  hindsight_init("ComposePostService");
   init_logger();
   SetUpTracer("config/jaeger-config.yml", "compose-post-service");
 
