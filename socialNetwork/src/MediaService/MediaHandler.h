@@ -12,6 +12,11 @@
 // 2018-01-01 00:00:00 UTC
 #define CUSTOM_EPOCH 1514764800000
 
+extern "C"{
+    #include "tracer/hindsight.h"
+    #include "tracer/agentapi.h"
+}
+
 namespace social_network {
 
 class MediaHandler : public MediaServiceIf {
@@ -36,6 +41,7 @@ void MediaHandler::ComposeMedia(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  hindsight_begin(req_id);
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "compose_media_server", {opentracing::ChildOf(parent_span->get())});
@@ -55,7 +61,8 @@ void MediaHandler::ComposeMedia(
     new_media.media_type = media_types[i];
     _return.emplace_back(new_media);
   }
-
+  hindsight_trigger(req_id);
+  hindsight_end();
   span->Finish();
 }
 

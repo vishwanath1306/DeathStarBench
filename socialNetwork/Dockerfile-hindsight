@@ -3,8 +3,7 @@ FROM golang
 ARG SSH_PRIVATE_KEY
 
 RUN apt-get update \
-    && apt-get install -y automake bison flex g++ git libboost-all-dev \
-    libevent-dev libssl-dev libtool make pkg-config supervisor ssh
+    && apt-get install -y automake g++ git make pkg-config supervisor ssh
 
 ## Adding SSH keys for accessing private repo
 RUN mkdir /root/.ssh/

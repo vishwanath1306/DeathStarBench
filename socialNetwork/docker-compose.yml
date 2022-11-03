@@ -108,17 +108,18 @@ services:
     restart: always
 
   url-shorten-service:
-    image: deathstarbench/social-network-microservices:latest
+    image: dsbhsinteg:latest
     hostname: url-shorten-service
-    #    ports:
-    #      - 10004:9090
+    ports:
+      - 5059:5050
     restart: always
-    entrypoint: UrlShortenService
+    command: supervisord -c /etc/supervisor_conf/UrlShortenService_supervisor.conf
     depends_on:
       jaeger-agent:
         condition: service_started
       url-shorten-mongodb:
         condition: service_started
+    shm_size: 8gb
     volumes:
       - ./config:/social-network-microservices/config
 
@@ -166,17 +167,18 @@ services:
     restart: always
 
   media-service:
-    image: deathstarbench/social-network-microservices:latest
+    image: dsbhsinteg:latest
     hostname: media-service
-    #    ports:
-    #      - 10006:9090
+    ports:
+      - 5053:5050
     depends_on:
       jaeger-agent:
         condition: service_started
       media-mongodb:
         condition: service_started
     restart: always
-    entrypoint: MediaService
+    command: supervisord -c /etc/supervisor_conf/MediaService_supervisor.conf
+    shm_size: 8gb
     volumes:
       - ./config:/social-network-microservices/config
 
@@ -212,6 +214,7 @@ services:
     hostname: unique-id-service
     ports:
       - 5055:5055
+      - 5057:5050
     restart: always
     depends_on:
       jaeger-agent:
@@ -292,7 +295,7 @@ services:
       - COLLECTOR_ZIPKIN_HTTP_PORT=9411
 
   hindsight-coordinator:
-    image: hindsight_coordinator:latest
+    image: hindsight_tracing:latest
     hostname: hindsight-coordinator
     ports:
       - 5252:5252

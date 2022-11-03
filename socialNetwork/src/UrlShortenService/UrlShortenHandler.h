@@ -17,6 +17,11 @@
 
 #define HOSTNAME "http://short-url/"
 
+extern "C"{
+    #include "tracer/hindsight.h"
+    #include "tracer/agentapi.h"
+}
+
 namespace social_network {
 
 class UrlShortenHandler : public UrlShortenServiceIf {
@@ -75,6 +80,7 @@ void UrlShortenHandler::ComposeUrls(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  hindsight_begin(req_id);
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "compose_urls_server",
@@ -162,6 +168,8 @@ void UrlShortenHandler::ComposeUrls(
   }
 
   _return = target_urls;
+  hindsight_trigger(req_id);
+  hindsight_end();
   span->Finish();
 
 }
