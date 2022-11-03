@@ -13,6 +13,11 @@
 #include "../tracing.h"
 #include "../utils.h"
 
+extern "C"{
+  #include "tracer/hindsight.h"
+  #include "tracer/agentapi.h"
+}
+
 namespace social_network {
 
 class UserMentionHandler : public UserMentionServiceIf {
@@ -44,6 +49,7 @@ void UserMentionHandler::ComposeUserMentions(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  hindsight_begin(req_id);
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "compose_user_mentions_server",
@@ -227,6 +233,8 @@ void UserMentionHandler::ComposeUserMentions(
   }
 
   _return = user_mentions;
+  hindsight_trigger(req_id);
+  hindsight_end();
   span->Finish();
 }
 

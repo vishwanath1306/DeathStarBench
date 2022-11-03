@@ -19,6 +19,10 @@
 #include "../logger.h"
 #include "../tracing.h"
 
+extern "C"{
+  #include "tracer/hindsight.h"
+  #include "tracer/agentapi.h"
+}
 using namespace sw::redis;
 
 namespace social_network {
@@ -83,6 +87,7 @@ void SocialGraphHandler::Follow(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  hindsight_begin(req_id);
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "follow_server", {opentracing::ChildOf(parent_span->get())});
@@ -257,7 +262,8 @@ void SocialGraphHandler::Follow(
   } catch (...) {
     throw;
   }
-
+  hindsight_trigger(req_id);
+  hindsight_end();
   span->Finish();
 }
 

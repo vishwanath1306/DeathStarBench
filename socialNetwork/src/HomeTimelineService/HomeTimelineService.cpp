@@ -24,6 +24,7 @@ void sigintHandler(int sig) { exit(EXIT_SUCCESS); }
 
 int main(int argc, char *argv[]) {
   signal(SIGINT, sigintHandler);
+  hindsight_init("HomeTimelineService");
   init_logger();
 
   // Command line options

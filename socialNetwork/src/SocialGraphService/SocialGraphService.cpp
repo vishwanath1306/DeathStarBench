@@ -24,7 +24,7 @@ void sigintHandler(int sig) { exit(EXIT_SUCCESS); }
 int main(int argc, char *argv[]) {
   signal(SIGINT, sigintHandler);
   init_logger();
-
+  hindsight_init("SocialGraphService");
   // Command line options
   namespace po = boost::program_options;
   po::options_description desc("Options");
