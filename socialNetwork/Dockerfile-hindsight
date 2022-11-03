@@ -20,8 +20,11 @@ RUN git clone git@github.com:SimBioSysLab/hindsight.git ; \
     cd hindsight/client ; \
     make && make install; ldconfig ;\
     cd ../agent && go build -o coordinator cmd/coordinator/main.go; \
-    mv coordinator /usr/local/bin/ ;
+    cd ../agent && go build -o collector cmd/collector/main.go; \
+    mv coordinator /usr/local/bin/ ; \
+    mv collector /usr/local/bin/ ;
 
 COPY ./supervisor_conf/hindsight_coordinator.conf /etc/coordinator.conf
+COPY ./supervisor_conf/hindsight_collector.conf /etc/collector.conf
 
 WORKDIR /hindsight

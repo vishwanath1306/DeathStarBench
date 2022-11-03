@@ -293,7 +293,7 @@ services:
 
   hindsight-coordinator:
     image: hindsight_coordinator:latest
-    hostname: hindsight_coordinator
+    hostname: hindsight-coordinator
     ports:
       - 5252:5252
     restart: always
@@ -301,6 +301,20 @@ services:
       jaeger-agent:
         condition: service_started
     command: supervisord -c /etc/coordinator.conf
+    shm_size: 8gb
+    volumes:
+      - ./config:/social-network-microservices/config
+  
+  hindsight-collector:
+    image: hindsight_tracing:latest
+    hostname: hindsight-collector
+    ports:
+      - 5253:5253
+    restart: always
+    depends_on:
+      jaeger-agent:
+        condition: service_started
+    command: supervisord -c /etc/collector.conf
     shm_size: 8gb
     volumes:
       - ./config:/social-network-microservices/config
