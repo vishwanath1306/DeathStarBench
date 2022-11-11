@@ -74,6 +74,22 @@ int64_t UniqueIdHandler::ComposeUniqueId(
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "compose_unique_id_server", {opentracing::ChildOf(parent_span->get())});
+
+  auto baggage_it = carrier.find("baggage");
+  if (baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+
+  } else {
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+
+  char hbuf[hindsight_payload()];
+  hindsight_tracepoint(hbuf, hindsight_payload());
+  writer_text_map["baggage"] = hindsight_serialize();
+  
+  // char mess[128];
+  // sprintf(mess, "compose_unique_id_server| %ld", req_id);
+  // hindsight_tracepoint(mess, sizeof(mess));
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
   _thread_lock->lock();
@@ -110,8 +126,8 @@ int64_t UniqueIdHandler::ComposeUniqueId(
   std::string post_id_str = _machine_id + timestamp_hex + counter_hex;
   int64_t post_id = stoul(post_id_str, nullptr, 16) & 0x7FFFFFFFFFFFFFFF;
   LOG(debug) << "The post_id of the request " << req_id << " is " << post_id;
-  std::cout<<"Request ID for trigger: "<<req_id<<std::endl;
-  hindsight_trigger(req_id);
+  // std::cout<<"Request ID for trigger: "<<req_id<<std::endl;
+  // hindsight_trigger(req_id);
   span->Finish();
   hindsight_end();
   return post_id;
