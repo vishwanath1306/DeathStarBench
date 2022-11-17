@@ -17,12 +17,12 @@ sudo parted
 Building the Hindisight coordinator
 
 ```
-docker build -f Dockerfile-hindsight -t hindsight_tracing --build-arg SSH_PRIVATE_KEY="$(cat ~/.ssh/id_rsa)" .
+docker build -f Dockerfile-hindsight -t hindsight_tracing .
 ```
 
 Building the social network services
 ```
-docker build -t dsbhsinteg --build-arg SSH_PRIVATE_KEY="$(cat ~/.ssh/id_rsa)" .
+docker build -t dsbhsinteg .
 ```
 
 

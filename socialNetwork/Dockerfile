@@ -19,20 +19,10 @@ RUN cd /tmp/redis-plus-plus\
 # Installing Golang
 COPY --from=golang:latest /usr/local/go /usr/local/go
 ENV PATH="/usr/local/go/bin:${PATH}"
-
-# Installing Hindsight
-
-## Adding SSH keys for accessing private repo
-RUN mkdir /root/.ssh/
-RUN echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa
-RUN chmod 600 /root/.ssh/id_rsa
-RUN touch /root/.ssh/known_hosts
-RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
-
 # Actual hindsight install
 RUN mkdir /hindsight
 WORKDIR /hindsight
-RUN git clone git@github.com:SimBioSysLab/hindsight.git ; \
+RUN git clone https://gitlab.mpi-sws.org/cld/tracing/hindsight.git ; \
     cd hindsight/client ; \
     make && make install; ldconfig ;\
     cd ../agent && go build -o agent cmd/agent2/main.go; \
