@@ -86,10 +86,7 @@ int64_t UniqueIdHandler::ComposeUniqueId(
   char hbuf[hindsight_payload()];
   hindsight_tracepoint(hbuf, hindsight_payload());
   writer_text_map["baggage"] = hindsight_serialize();
-  
-  // char mess[128];
-  // sprintf(mess, "compose_unique_id_server| %ld", req_id);
-  // hindsight_tracepoint(mess, sizeof(mess));
+
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
   _thread_lock->lock();
