@@ -87,17 +87,6 @@ void UrlShortenHandler::ComposeUrls(
       { opentracing::ChildOf(parent_span->get()) });
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
-  auto baggage_it = carrier.find("baggage");
-  if (baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
-  } else {
-    hindsight_breadcrumb(hindsight_serialize());
-  }
-  
-  char hbuf[hindsight_payload()];
-  hindsight_tracepoint(hbuf, hindsight_payload());
-  writer_text_map["baggage"] = hindsight_serialize();
-  
   std::vector<Url> target_urls;
   std::future<void> mongo_future;
 

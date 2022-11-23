@@ -224,7 +224,8 @@ void HomeTimelineHandler::ReadHomeTimeline(
     throw;
   }
   _post_client_pool->Keepalive(post_client_wrapper);
-  hindsight_trigger(req_id);
+  // TODO: Fix the triggers such that it makes sense. 
+  // hindsight_trigger(req_id);
   hindsight_end();
   span->Finish();
 }

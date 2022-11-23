@@ -15,8 +15,12 @@
 
 
 extern "C"{
-    #include "tracer/hindsight.h"
     #include "tracer/agentapi.h"
+    #include "tracer/breadcrumb.h"
+    #include "tracer/common.h"
+    #include "tracer/hindsight.h"
+    #include "tracer/tracestate.h"
+    #include "tracer/trigger.h"
 }
 // Custom Epoch (January 1, 2018 Midnight GMT = 2018-01-01T00:00:00Z)
 #define CUSTOM_EPOCH 1514764800000
@@ -71,22 +75,20 @@ int64_t UniqueIdHandler::ComposeUniqueId(
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
   hindsight_begin(req_id);
+
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "compose_unique_id_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "compose_unique_id_server", {opentracing::ChildOf(parent_span->get())});
-
-  auto baggage_it = carrier.find("baggage");
-  if (baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
-
-  } else {
-    hindsight_breadcrumb(hindsight_serialize());
-  }
-
-  char hbuf[hindsight_payload()];
-  hindsight_tracepoint(hbuf, hindsight_payload());
-  writer_text_map["baggage"] = hindsight_serialize();
-
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
   _thread_lock->lock();
@@ -126,7 +128,6 @@ int64_t UniqueIdHandler::ComposeUniqueId(
   // std::cout<<"Request ID for trigger: "<<req_id<<std::endl;
   // hindsight_trigger(req_id);
   span->Finish();
-  hindsight_end();
   return post_id;
 }
 

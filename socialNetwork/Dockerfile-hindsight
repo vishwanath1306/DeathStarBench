@@ -5,17 +5,10 @@ ARG SSH_PRIVATE_KEY
 RUN apt-get update \
     && apt-get install -y automake g++ git make pkg-config supervisor ssh
 
-## Adding SSH keys for accessing private repo
-RUN mkdir /root/.ssh/
-RUN echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa
-RUN chmod 600 /root/.ssh/id_rsa
-RUN touch /root/.ssh/known_hosts
-RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
-
-# Actual hindsight install
+# Installing Hindsight
 RUN mkdir /hindsight
 WORKDIR /hindsight
-RUN git clone git@github.com:SimBioSysLab/hindsight.git ; \
+RUN git clone https://gitlab.mpi-sws.org/cld/tracing/hindsight.git ; \
     cd hindsight/client ; \
     make && make install; ldconfig ;\
     cd ../agent && go build -o coordinator cmd/coordinator/main.go; \
