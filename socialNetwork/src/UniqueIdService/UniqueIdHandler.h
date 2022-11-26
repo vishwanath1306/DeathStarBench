@@ -74,6 +74,8 @@ int64_t UniqueIdHandler::ComposeUniqueId(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  hindsight_begin(req_id);
+
 
   // Hindsight Instrumentation Begin. 
 
@@ -90,6 +92,7 @@ int64_t UniqueIdHandler::ComposeUniqueId(
   writer_text_map["baggage"] = hindsight_serialize();
 
   // Hindsight instrumentation end
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "compose_unique_id_server", {opentracing::ChildOf(parent_span->get())});
