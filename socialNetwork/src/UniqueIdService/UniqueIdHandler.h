@@ -74,9 +74,6 @@ int64_t UniqueIdHandler::ComposeUniqueId(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
-  hindsight_begin(req_id);
-
-
   // Hindsight Instrumentation Begin. 
 
   hindsight_begin(req_id);
