@@ -76,6 +76,10 @@ int64_t UniqueIdHandler::ComposeUniqueId(
   TextMapWriter writer(writer_text_map);
   hindsight_begin(req_id);
 
+
+  // Hindsight Instrumentation Begin. 
+
+  hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
     hindsight_deserialize(strdup((baggage_it->second).c_str()));
@@ -85,6 +89,9 @@ int64_t UniqueIdHandler::ComposeUniqueId(
   char trace_point_text[128];
   sprintf(trace_point_text, "compose_unique_id_server");
   hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight instrumentation end
 
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
@@ -127,6 +134,7 @@ int64_t UniqueIdHandler::ComposeUniqueId(
   LOG(debug) << "The post_id of the request " << req_id << " is " << post_id;
   // std::cout<<"Request ID for trigger: "<<req_id<<std::endl;
   // hindsight_trigger(req_id);
+  hindsight_end();
   span->Finish();
   return post_id;
 }

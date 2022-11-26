@@ -41,7 +41,23 @@ void MediaHandler::ComposeMedia(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+
+  // Hindsight Instrumentation Begin.
   hindsight_begin(req_id);
+
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+
+  char trace_point_text[128];
+  sprintf(trace_point_text, "compose_media_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+  
+  // Hindsight Instrumentation End. 
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "compose_media_server", {opentracing::ChildOf(parent_span->get())});

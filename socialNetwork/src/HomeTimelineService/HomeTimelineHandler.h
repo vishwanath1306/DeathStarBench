@@ -74,17 +74,40 @@ void HomeTimelineHandler::WriteHomeTimeline(
     const std::map<std::string, std::string> &carrier) {
   // Initialize a span
   TextMapReader reader(carrier);
+  std::map<std::string, std::string> writer_text_map;
+  TextMapWriter writer(writer_text_map);
+  
+  // Hindsight Instrumentation Begins. 
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "write_home_timeline_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "write_home_timeline_server", {opentracing::ChildOf(parent_span->get())});
 
+
+  sprintf(trace_point_text, "get_followers_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
   // Find followers of the user
+
   auto followers_span = opentracing::Tracer::Global()->StartSpan(
       "get_followers_client", {opentracing::ChildOf(&span->context())});
-  std::map<std::string, std::string> writer_text_map;
-  TextMapWriter writer(writer_text_map);
+  // std::map<std::string, std::string> writer_text_map;
+  // TextMapWriter writer(writer_text_map);
   opentracing::Tracer::Global()->Inject(followers_span->context(), writer);
-
   auto social_graph_client_wrapper = _social_graph_client_pool->Pop();
   if (!social_graph_client_wrapper) {
     ServiceException se;
@@ -110,6 +133,10 @@ void HomeTimelineHandler::WriteHomeTimeline(
 
   // Update Redis ZSet
   // Zset key: follower_id, Zset value: post_id_str, Zset score: timestamp_str
+  sprintf(trace_point_text, "write_home_timeline_redis_update_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggagge"] = hindsight_serialize();
+
   auto redis_span = opentracing::Tracer::Global()->StartSpan(
       "write_home_timeline_redis_update_client",
       {opentracing::ChildOf(&span->context())});
@@ -162,6 +189,7 @@ void HomeTimelineHandler::WriteHomeTimeline(
       }
     }
   }
+  hindsight_end();
   redis_span->Finish();
 }
 
@@ -172,7 +200,23 @@ void HomeTimelineHandler::ReadHomeTimeline(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  // Hindsight Instrumentation Begins. 
+  
   hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+
+  char trace_point_text[128];
+  sprintf(trace_point_text, "read_home_timeline_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "read_home_timeline_server", {opentracing::ChildOf(parent_span->get())});
@@ -181,6 +225,10 @@ void HomeTimelineHandler::ReadHomeTimeline(
   if (stop_idx <= start_idx || start_idx < 0) {
     return;
   }
+
+  sprintf(trace_point_text, "read_home_timeline_redis_find_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
 
   auto redis_span = opentracing::Tracer::Global()->StartSpan(
       "read_home_timeline_redis_find_client",
