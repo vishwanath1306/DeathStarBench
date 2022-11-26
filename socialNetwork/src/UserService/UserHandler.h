@@ -128,7 +128,22 @@ void UserHandler::RegisterUserWithId(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  // Hindsight Instrumentation Begins. 
+
   hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "register_with_user_id_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "register_user_withid_server",
@@ -187,6 +202,9 @@ void UserHandler::RegisterUserWithId(
     BSON_APPEND_UTF8(new_doc, "password", password_hashed.c_str());
 
     bson_error_t error;
+    sprintf(trace_point_text, "reg_wuser_id_user_mongo_insert_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
     auto user_insert_span = opentracing::Tracer::Global()->StartSpan(
         "user_mongo_insert_cilent", {opentracing::ChildOf(&span->context())});
     if (!mongoc_collection_insert_one(collection, new_doc, nullptr, nullptr,
@@ -231,7 +249,8 @@ void UserHandler::RegisterUserWithId(
     }
     _social_graph_client_pool->Keepalive(social_graph_client_wrapper);
   }
-  hindsight_trigger(req_id);
+  // TODO: Add hindsight triggers. 
+  // hindsight_trigger(req_id);
   hindsight_end();
   span->Finish();
 }
@@ -245,6 +264,22 @@ void UserHandler::RegisterUser(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "register_user_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "register_user_server", {opentracing::ChildOf(parent_span->get())});
@@ -335,6 +370,10 @@ void UserHandler::RegisterUser(
     std::string password_hashed = picosha2::hash256_hex_string(password + salt);
     BSON_APPEND_UTF8(new_doc, "password", password_hashed.c_str());
 
+    sprintf(trace_point_text, "reg_user_user_mongo_insert_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
+
     auto user_insert_span = opentracing::Tracer::Global()->StartSpan(
         "user_mongo_insert_client", {opentracing::ChildOf(&span->context())});
     if (!mongoc_collection_insert_one(collection, new_doc, nullptr, nullptr,
@@ -381,6 +420,8 @@ void UserHandler::RegisterUser(
     _social_graph_client_pool->Keepalive(social_graph_client_wrapper);
   }
 
+  //TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
 }
 
@@ -390,9 +431,26 @@ void UserHandler::ComposeCreatorWithUsername(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "compose_creator_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
-      "compose_creator_server", {opentracing::ChildOf(parent_span->get())});
+      "compose_creator_with_username_server", {opentracing::ChildOf(parent_span->get())});
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
   size_t user_id_size;
@@ -403,6 +461,11 @@ void UserHandler::ComposeCreatorWithUsername(
       memcached_pool_pop(_memcached_client_pool, true, &memcached_rc);
   char *user_id_mmc;
   if (memcached_client) {
+
+    sprintf(trace_point_text, "ccwun_user_mmc_get_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
+
     auto id_get_span = opentracing::Tracer::Global()->StartSpan(
         "user_mmc_get_client", {opentracing::ChildOf(&span->context())});
     user_id_mmc =
@@ -452,6 +515,10 @@ void UserHandler::ComposeCreatorWithUsername(
     }
     bson_t *query = bson_new();
     BSON_APPEND_UTF8(query, "username", username.c_str());
+
+    sprintf(trace_point_text, "ccwun_user_mongo_find_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
 
     auto find_span = opentracing::Tracer::Global()->StartSpan(
         "user_mongo_find_client", {opentracing::ChildOf(&span->context())});
@@ -520,6 +587,11 @@ void UserHandler::ComposeCreatorWithUsername(
       memcached_pool_pop(_memcached_client_pool, true, &memcached_rc);
   if (memcached_client) {
     if (user_id != -1 && !cached) {
+
+      sprintf(trace_point_text, "ccwun_user_mmc_set_client");
+      hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+      writer_text_map["baggage"] = hindsight_serialize();
+
       auto id_set_span = opentracing::Tracer::Global()->StartSpan(
           "user_mmc_set_cilent", {opentracing::ChildOf(&span->context())});
       std::string user_id_str = std::to_string(user_id);
@@ -539,6 +611,8 @@ void UserHandler::ComposeCreatorWithUsername(
   } else {
     LOG(warning) << "Failed to pop a client from memcached pool";
   }
+  // TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
 }
 
@@ -549,6 +623,22 @@ void UserHandler::ComposeCreatorWithUserId(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "compose_creator_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "compose_creator_server", {opentracing::ChildOf(parent_span->get())});
@@ -570,6 +660,22 @@ void UserHandler::Login(std::string &_return, int64_t req_id,
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "login_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "login_server", {opentracing::ChildOf(parent_span->get())});
@@ -585,6 +691,11 @@ void UserHandler::Login(std::string &_return, int64_t req_id,
   if (!memcached_client) {
     LOG(warning) << "Failed to pop a client from memcached pool";
   } else {
+    
+    sprintf(trace_point_text, "login_user_mmc_get_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
+
     auto get_login_span = opentracing::Tracer::Global()->StartSpan(
         "user_mmc_get_client", {opentracing::ChildOf(&span->context())});
     login_mmc = memcached_get(memcached_client, (username + ":login").c_str(),
@@ -637,6 +748,10 @@ void UserHandler::Login(std::string &_return, int64_t req_id,
     }
     bson_t *query = bson_new();
     BSON_APPEND_UTF8(query, "username", username.c_str());
+
+    sprintf(trace_point_text, "login_user_mongo_find_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
 
     auto find_span = opentracing::Tracer::Global()->StartSpan(
         "user_mongo_find_client", {opentracing::ChildOf(&span->context())});
@@ -735,6 +850,11 @@ void UserHandler::Login(std::string &_return, int64_t req_id,
     if (!memcached_client) {
       LOG(warning) << "Failed to pop a client from memcached pool";
     } else {
+      
+      sprintf(trace_point_text, "login_user_mmc_set_client");
+      hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+      writer_text_map["baggage"] = hindsight_serialize();
+
       auto set_login_span = opentracing::Tracer::Global()->StartSpan(
           "user_mmc_set_client", {opentracing::ChildOf(&span->context())});
       std::string login_str = login_json.dump();
@@ -751,14 +871,34 @@ void UserHandler::Login(std::string &_return, int64_t req_id,
       memcached_pool_push(_memcached_client_pool, memcached_client);
     }
   }
+  // TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
 }
+
 int64_t UserHandler::GetUserId(
     int64_t req_id, const std::string &username,
     const std::map<std::string, std::string> &carrier) {
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "get_user_id_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "get_user_id_server", {opentracing::ChildOf(parent_span->get())});
@@ -772,6 +912,11 @@ int64_t UserHandler::GetUserId(
       memcached_pool_pop(_memcached_client_pool, true, &memcached_rc);
   char *user_id_mmc;
   if (memcached_client) {
+    
+    sprintf(trace_point_text, "guis_user_mmc_get_user_id_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
+
     auto id_get_span = opentracing::Tracer::Global()->StartSpan(
         "user_mmc_get_user_id_client",
         {opentracing::ChildOf(&span->context())});
@@ -820,6 +965,10 @@ int64_t UserHandler::GetUserId(
     }
     bson_t *query = bson_new();
     BSON_APPEND_UTF8(query, "username", username.c_str());
+
+    sprintf(trace_point_text, "guis_user_mongo_find_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
 
     auto find_span = opentracing::Tracer::Global()->StartSpan(
         "user_mongo_find_client", {opentracing::ChildOf(&span->context())});
@@ -882,6 +1031,11 @@ int64_t UserHandler::GetUserId(
     if (!memcached_client) {
       LOG(warning) << "Failed to pop a client from memcached pool";
     } else {
+
+      sprintf(trace_point_text, "guis_user_mmc_set_client");
+      hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+      writer_text_map["baggage"] = hindsight_serialize();
+
       std::string user_id_str = std::to_string(user_id);
       auto set_login_span = opentracing::Tracer::Global()->StartSpan(
           "user_mmc_set_client", {opentracing::ChildOf(&span->context())});
@@ -899,6 +1053,8 @@ int64_t UserHandler::GetUserId(
     }
   }
 
+  //TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
   return user_id;
 }

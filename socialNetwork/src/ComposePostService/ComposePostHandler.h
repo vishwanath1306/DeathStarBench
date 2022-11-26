@@ -122,6 +122,22 @@ Creator ComposePostHandler::_ComposeCreaterHelper(
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
   opentracing::Tracer::Global()->Inject(span->context(), writer);
+  
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "compose_creator_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
 
   auto user_client_wrapper = _user_service_client_pool->Pop();
   if (!user_client_wrapper) {
@@ -145,6 +161,8 @@ Creator ComposePostHandler::_ComposeCreaterHelper(
     throw;
   }
   _user_service_client_pool->Keepalive(user_client_wrapper);
+  // TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
   return _return_creator;
 }
@@ -159,6 +177,22 @@ TextServiceReturn ComposePostHandler::_ComposeTextHelper(
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
   opentracing::Tracer::Global()->Inject(span->context(), writer);
+
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "compose_text_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
 
   auto text_client_wrapper = _text_service_client_pool->Pop();
   if (!text_client_wrapper) {
@@ -182,6 +216,8 @@ TextServiceReturn ComposePostHandler::_ComposeTextHelper(
     throw;
   }
   _text_service_client_pool->Keepalive(text_client_wrapper);
+  // TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
   return _return_text;
 }
@@ -197,6 +233,22 @@ std::vector<Media> ComposePostHandler::_ComposeMediaHelper(
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
   opentracing::Tracer::Global()->Inject(span->context(), writer);
+
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "compose_media_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
 
   auto media_client_wrapper = _media_service_client_pool->Pop();
   if (!media_client_wrapper) {
@@ -221,6 +273,8 @@ std::vector<Media> ComposePostHandler::_ComposeMediaHelper(
     throw;
   }
   _media_service_client_pool->Keepalive(media_client_wrapper);
+  // TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
   return _return_media;
 }
@@ -235,6 +289,22 @@ int64_t ComposePostHandler::_ComposeUniqueIdHelper(
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
   opentracing::Tracer::Global()->Inject(span->context(), writer);
+
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "compose_unique_id_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
 
   auto unique_id_client_wrapper = _unique_id_service_client_pool->Pop();
   if (!unique_id_client_wrapper) {
@@ -258,6 +328,8 @@ int64_t ComposePostHandler::_ComposeUniqueIdHelper(
     throw;
   }
   _unique_id_service_client_pool->Keepalive(unique_id_client_wrapper);
+  // TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
   return _return_unique_id;
 }
@@ -272,6 +344,23 @@ void ComposePostHandler::_UploadPostHelper(
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
   opentracing::Tracer::Global()->Inject(span->context(), writer);
+
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "store_post_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
+
 
   auto post_storage_client_wrapper = _post_storage_client_pool->Pop();
   if (!post_storage_client_wrapper) {
@@ -292,6 +381,8 @@ void ComposePostHandler::_UploadPostHelper(
   }
   _post_storage_client_pool->Keepalive(post_storage_client_wrapper);
 
+  // TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
 }
 
@@ -305,6 +396,22 @@ void ComposePostHandler::_UploadUserTimelineHelper(
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
   opentracing::Tracer::Global()->Inject(span->context(), writer);
+
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "writer_user_timeline_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
 
   auto user_timeline_client_wrapper = _user_timeline_client_pool->Pop();
   if (!user_timeline_client_wrapper) {
@@ -324,7 +431,8 @@ void ComposePostHandler::_UploadUserTimelineHelper(
     throw;
   }
   _user_timeline_client_pool->Keepalive(user_timeline_client_wrapper);
-
+  // TODO: Add hindsight trigger
+  hindsight_end();
   span->Finish();
 }
 
@@ -339,6 +447,22 @@ void ComposePostHandler::_UploadHomeTimelineHelper(
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
   opentracing::Tracer::Global()->Inject(span->context(), writer);
+
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "write_home_timeline_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
 
   auto home_timeline_client_wrapper = _home_timeline_client_pool->Pop();
   if (!home_timeline_client_wrapper) {
@@ -359,7 +483,8 @@ void ComposePostHandler::_UploadHomeTimelineHelper(
     throw;
   }
   _home_timeline_client_pool->Keepalive(home_timeline_client_wrapper);
-
+  // TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
 }
 
@@ -374,8 +499,23 @@ void ComposePostHandler::ComposePost(
       "compose_post_server", {opentracing::ChildOf(parent_span->get())});
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
-  hindsight_begin(req_id);
   opentracing::Tracer::Global()->Inject(span->context(), writer);
+  
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "compose_post_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
 
   auto text_future =
       std::async(std::launch::async, &ComposePostHandler::_ComposeTextHelper,
@@ -443,7 +583,8 @@ void ComposePostHandler::ComposePost(
   // {
   //   throw;
   // }
-  hindsight_trigger(req_id);
+  // TODO: Add hindsight triggers.
+  // hindsight_trigger(req_id);
   hindsight_end();
   span->Finish();
 }

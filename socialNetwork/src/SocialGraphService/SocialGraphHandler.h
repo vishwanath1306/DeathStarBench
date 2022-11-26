@@ -87,11 +87,25 @@ void SocialGraphHandler::Follow(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
-  hindsight_begin(req_id);
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "follow_server", {opentracing::ChildOf(parent_span->get())});
   opentracing::Tracer::Global()->Inject(span->context(), writer);
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "sg_follow_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends.
 
   int64_t timestamp =
       duration_cast<milliseconds>(system_clock::now().time_since_epoch())
@@ -128,6 +142,9 @@ void SocialGraphHandler::Follow(
                                   BCON_INT64(timestamp), "}", "}");
         bson_error_t error;
         bson_t reply;
+        sprintf(trace_point_text, "sg_follow_mongo_update_client");
+        hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+        writer_text_map["baggage"] = hindsight_serialize();
         auto update_span = opentracing::Tracer::Global()->StartSpan(
             "mongo_update_client", {opentracing::ChildOf(&span->context())});
         bool updated = mongoc_collection_find_and_modify(
@@ -183,6 +200,11 @@ void SocialGraphHandler::Follow(
                                   BCON_INT64(user_id), "timestamp",
                                   BCON_INT64(timestamp), "}", "}");
         bson_error_t error;
+        
+        sprintf(trace_point_text, "sg_follow_social_graph_mongo_update_client");
+        hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+        writer_text_map["baggage"] = hindsight_serialize();
+
         auto update_span = opentracing::Tracer::Global()->StartSpan(
             "social_graph_mongo_update_client",
             {opentracing::ChildOf(&span->context())});
@@ -212,6 +234,11 @@ void SocialGraphHandler::Follow(
       });
 
   std::future<void> redis_update_future = std::async(std::launch::async, [&]() {
+
+    sprintf(trace_point_text, "sg_follow_social_graph_redis_update_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
+    
     auto redis_span = opentracing::Tracer::Global()->StartSpan(
         "social_graph_redis_update_client",
         {opentracing::ChildOf(&span->context())});
@@ -262,7 +289,8 @@ void SocialGraphHandler::Follow(
   } catch (...) {
     throw;
   }
-  hindsight_trigger(req_id);
+  // TODO: Add hindsight triggers
+  // hindsight_trigger(req_id);
   hindsight_end();
   span->Finish();
 }
@@ -278,6 +306,22 @@ void SocialGraphHandler::Unfollow(
   auto span = opentracing::Tracer::Global()->StartSpan(
       "unfollow_server", {opentracing::ChildOf(parent_span->get())});
   opentracing::Tracer::Global()->Inject(span->context(), writer);
+  
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "sg_unfollow_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends.
 
   std::future<void> mongo_update_follower_future =
       std::async(std::launch::async, [&]() {
@@ -306,6 +350,9 @@ void SocialGraphHandler::Unfollow(
                                   BCON_INT64(followee_id), "}", "}");
         bson_t reply;
         bson_error_t error;
+        sprintf(trace_point_text, "sg_unfollow_social_graph_mongo_delete_client");
+        hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+        writer_text_map["baggage"] = hindsight_serialize();
         auto update_span = opentracing::Tracer::Global()->StartSpan(
             "social_graph_mongo_delete_client",
             {opentracing::ChildOf(&span->context())});
@@ -360,6 +407,9 @@ void SocialGraphHandler::Unfollow(
                                   BCON_INT64(user_id), "}", "}");
         bson_t reply;
         bson_error_t error;
+        sprintf(trace_point_text, "sg_unfollow_social_graph_mongo_delete_client");
+        hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+        writer_text_map["baggage"] = hindsight_serialize();
         auto update_span = opentracing::Tracer::Global()->StartSpan(
             "social_graph_mongo_delete_client",
             {opentracing::ChildOf(&span->context())});
@@ -388,6 +438,11 @@ void SocialGraphHandler::Unfollow(
       });
 
   std::future<void> redis_update_future = std::async(std::launch::async, [&]() {
+
+    sprintf(trace_point_text, "sg_unfollow_social_graph_redis_update_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
+
     auto redis_span = opentracing::Tracer::Global()->StartSpan(
         "social_graph_redis_update_client",
         {opentracing::ChildOf(&span->context())});
@@ -430,6 +485,8 @@ void SocialGraphHandler::Unfollow(
     throw;
   }
 
+  // TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
 }
 
@@ -440,10 +497,31 @@ void SocialGraphHandler::GetFollowers(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+   
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "get_followers_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends.
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "get_followers_server", {opentracing::ChildOf(parent_span->get())});
   opentracing::Tracer::Global()->Inject(span->context(), writer);
+
+  sprintf(trace_point_text, "sg_get_followers_social_graph_redis_get_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
 
   auto redis_span = opentracing::Tracer::Global()->StartSpan(
       "social_graph_redis_get_client",
@@ -492,6 +570,11 @@ void SocialGraphHandler::GetFollowers(
     }
     bson_t *query = bson_new();
     BSON_APPEND_INT64(query, "user_id", user_id);
+
+    sprintf(trace_point_text, "sg_get_followers_social_graph_mongo_find_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
+
     auto find_span = opentracing::Tracer::Global()->StartSpan(
         "social_graph_mongo_find_client",
         {opentracing::ChildOf(&span->context())});
@@ -536,6 +619,11 @@ void SocialGraphHandler::GetFollowers(
 
       // Update Redis
       std::string key = std::to_string(user_id) + ":followers";
+
+      sprintf(trace_point_text, "sg_get_followers_social_graph_redis_insert_client");
+      hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+      writer_text_map["baggage"] = hindsight_serialize();
+
       auto redis_insert_span = opentracing::Tracer::Global()->StartSpan(
           "social_graph_redis_insert_client",
           {opentracing::ChildOf(&span->context())});
@@ -560,6 +648,8 @@ void SocialGraphHandler::GetFollowers(
       mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
     }
   }
+  // TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
 }
 
@@ -570,10 +660,31 @@ void SocialGraphHandler::GetFollowees(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+     
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "sg_social_graph_get_followees_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "get_followees_server", {opentracing::ChildOf(parent_span->get())});
   opentracing::Tracer::Global()->Inject(span->context(), writer);
+
+  sprintf(trace_point_text, "sg_social_graph_redis_get_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
 
   auto redis_span = opentracing::Tracer::Global()->StartSpan(
       "social_graph_redis_get_client",
@@ -623,6 +734,11 @@ void SocialGraphHandler::GetFollowees(
     }
     bson_t *query = bson_new();
     BSON_APPEND_INT64(query, "user_id", user_id);
+
+    sprintf(trace_point_text, "sg_social_graph_mongo_find_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
+
     auto find_span = opentracing::Tracer::Global()->StartSpan(
         "social_graph_mongo_find_client",
         {opentracing::ChildOf(&span->context())});
@@ -680,6 +796,11 @@ void SocialGraphHandler::GetFollowees(
 
       // Update redis
       std::string key = std::to_string(user_id) + ":followees";
+
+      sprintf(trace_point_text, "sg_social_graph_redis_insert_client");
+      hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+      writer_text_map["baggage"] = hindsight_serialize();
+
       auto redis_insert_span = opentracing::Tracer::Global()->StartSpan(
           "social_graph_redis_insert_client",
           {opentracing::ChildOf(&span->context())});
@@ -697,6 +818,8 @@ void SocialGraphHandler::GetFollowees(
       redis_span->Finish();
     }
   }
+  // TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
 }
 
@@ -707,6 +830,23 @@ void SocialGraphHandler::InsertUser(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "sg_social_graph_insert_user_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "insert_user_server", {opentracing::ChildOf(parent_span->get())});
@@ -733,6 +873,11 @@ void SocialGraphHandler::InsertUser(
   bson_t *new_doc = BCON_NEW("user_id", BCON_INT64(user_id), "followers", "[",
                              "]", "followees", "[", "]");
   bson_error_t error;
+
+  sprintf(trace_point_text, "sg_social_graph_mongo_insert_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
   auto insert_span = opentracing::Tracer::Global()->StartSpan(
       "social_graph_mongo_insert_client",
       {opentracing::ChildOf(&span->context())});
@@ -753,6 +898,8 @@ void SocialGraphHandler::InsertUser(
   bson_destroy(new_doc);
   mongoc_collection_destroy(collection);
   mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
+  // TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
 }
 
@@ -764,6 +911,23 @@ void SocialGraphHandler::FollowWithUsername(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "sg_social_graph_follow_with_username_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "follow_with_username_server",
@@ -827,6 +991,8 @@ void SocialGraphHandler::FollowWithUsername(
   if (user_id >= 0 && followee_id >= 0) {
     Follow(req_id, user_id, followee_id, writer_text_map);
   }
+  // TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
 }
 
@@ -838,6 +1004,23 @@ void SocialGraphHandler::UnfollowWithUsername(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "sg_social_graph_unfollow_with_username_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "unfollow_with_username_server",
@@ -904,6 +1087,8 @@ void SocialGraphHandler::UnfollowWithUsername(
       throw;
     }
   }
+  // TODO: Add hindsight triggers
+  hindsight_end();
   span->Finish();
 }
 

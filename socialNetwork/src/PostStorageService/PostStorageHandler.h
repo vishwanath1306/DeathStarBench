@@ -57,7 +57,23 @@ void PostStorageHandler::StorePost(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+
+  // Hindsight Instrumentation Begins. 
+  
   hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "store_post_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "store_post_server", {opentracing::ChildOf(parent_span->get())});
@@ -141,6 +157,10 @@ void PostStorageHandler::StorePost(
   }
   bson_append_array_end(new_doc, &media_list);
 
+  sprintf(trace_point_text, "post_storage_mongo_insert_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
   bson_error_t error;
   auto insert_span = opentracing::Tracer::Global()->StartSpan(
       "post_storage_mongo_insert_client",
@@ -163,7 +183,8 @@ void PostStorageHandler::StorePost(
   bson_destroy(new_doc);
   mongoc_collection_destroy(collection);
   mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
-  hindsight_trigger(req_id);
+  // TODO: Add hindsight trigger here. 
+  // hindsight_trigger(req_id);
   hindsight_end();
   span->Finish();
 }
@@ -175,6 +196,21 @@ void PostStorageHandler::ReadPost(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "read_post_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "read_post_server", {opentracing::ChildOf(parent_span->get())});
@@ -192,8 +228,13 @@ void PostStorageHandler::ReadPost(
     throw se;
   }
 
+
   size_t post_mmc_size;
   uint32_t memcached_flags;
+  sprintf(trace_point_text, "post_storage_mmc_get_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
   auto get_span = opentracing::Tracer::Global()->StartSpan(
       "post_storage_mmc_get_client", {opentracing::ChildOf(&span->context())});
   char *post_mmc =
@@ -259,6 +300,10 @@ void PostStorageHandler::ReadPost(
       mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
       throw se;
     }
+
+    sprintf(trace_point_text, "post_storage_mongo_find_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
 
     bson_t *query = bson_new();
     BSON_APPEND_INT64(query, "post_id", post_id);
@@ -337,6 +382,10 @@ void PostStorageHandler::ReadPost(
         se.message = "Failed to pop a client from memcached pool";
         throw se;
       }
+      sprintf(trace_point_text, "post_storage_mmc_set_client");
+      hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+      writer_text_map["baggage"] = hindsight_serialize();
+
       auto set_span = opentracing::Tracer::Global()->StartSpan(
           "post_storage_mmc_set_client",
           {opentracing::ChildOf(&span->context())});
@@ -355,6 +404,8 @@ void PostStorageHandler::ReadPost(
     }
   }
 
+  //TODO: Add hindsight_trigger here. 
+  hindsight_end();
   span->Finish();
 }
 void PostStorageHandler::ReadPosts(
@@ -365,6 +416,23 @@ void PostStorageHandler::ReadPosts(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  
+  // Hindsight Instrumentation Begins. 
+
+  hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+  char trace_point_text[128];
+  sprintf(trace_point_text, "post_storage_read_posts_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
+  
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "post_storage_read_posts_server",
@@ -423,6 +491,11 @@ void PostStorageHandler::ReadPosts(
   char *return_value;
   size_t return_value_length;
   uint32_t flags;
+
+  sprintf(trace_point_text, "post_storage_mmc_mget_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
   auto get_span = opentracing::Tracer::Global()->StartSpan(
       "post_storage_mmc_mget_client", {opentracing::ChildOf(&span->context())});
 
@@ -527,6 +600,10 @@ void PostStorageHandler::ReadPosts(
         mongoc_collection_find_with_opts(collection, query, nullptr, nullptr);
     const bson_t *doc;
 
+    sprintf(trace_point_text, "read_posts_mongo_find_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize(); 
+    
     auto find_span = opentracing::Tracer::Global()->StartSpan(
         "mongo_find_client", {opentracing::ChildOf(&span->context())});
     while (true) {
@@ -596,6 +673,11 @@ void PostStorageHandler::ReadPosts(
         se.message = "Failed to pop a client from memcached pool";
         throw se;
       }
+
+      sprintf(trace_point_text, "read_posts_mmc_set_client");
+      hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+      writer_text_map["baggage"] = hindsight_serialize();
+
       auto set_span = opentracing::Tracer::Global()->StartSpan(
           "mmc_set_client", {opentracing::ChildOf(&span->context())});
       for (auto &it : post_json_map) {
@@ -635,6 +717,9 @@ void PostStorageHandler::ReadPosts(
   } catch (...) {
     LOG(warning) << "Failed to set posts to memcached";
   }
+  // TODO: Add Hindsight Triggers. 
+  hindsight_end();
+
 }
 
 }  // namespace social_network
