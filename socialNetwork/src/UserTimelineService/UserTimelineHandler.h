@@ -72,7 +72,23 @@ void UserTimelineHandler::WriteUserTimeline(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+
+  // Hindsight Instrumentation Begins. 
+  
   hindsight_begin(req_id);
+  auto baggage_it = carrier.find("baggage");
+  if(baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+
+  char trace_point_text[128];
+  sprintf(trace_point_text, "write_user_timeline_servrer");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends. 
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "write_user_timeline_server", {opentracing::ChildOf(parent_span->get())});
@@ -104,6 +120,10 @@ void UserTimelineHandler::WriteUserTimeline(
                "]", "$position", BCON_INT32(0), "}", "}");
   bson_error_t error;
   bson_t reply;
+  sprintf(trace_point_text, "write_user_timeline_mongo_insert_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
   auto update_span = opentracing::Tracer::Global()->StartSpan(
       "write_user_timeline_mongo_insert_client",
       {opentracing::ChildOf(&span->context())});
@@ -139,6 +159,10 @@ void UserTimelineHandler::WriteUserTimeline(
   mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
 
   // Update user's timeline in redis
+  sprintf(trace_point_text, "write_user_timeline_redis_update_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+  
   auto redis_span = opentracing::Tracer::Global()->StartSpan(
       "write_user_timeline_redis_update_client",
       {opentracing::ChildOf(&span->context())});
@@ -155,7 +179,8 @@ void UserTimelineHandler::WriteUserTimeline(
     throw err;
   }
   redis_span->Finish();
-  hindsight_trigger(req_id);
+  // TODO: Add hindsight triggers here. 
+  // hindsight_trigger(req_id);
   hindsight_end();
   span->Finish();
 }
@@ -167,6 +192,25 @@ void UserTimelineHandler::ReadUserTimeline(
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
   TextMapWriter writer(writer_text_map);
+  
+  // Hindsight Instrumentation Begin.
+
+  hindsight_begin(req_id);
+
+  auto baggage_it = carrier.find("baggage");
+  if (baggage_it != carrier.end()){
+    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+  }else{
+    hindsight_breadcrumb(hindsight_serialize());
+  }
+
+  char trace_point_text[128];
+  sprintf(trace_point_text, "read_user_timeline_server");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
+
+  // Hindsight Instrumentation Ends.
+
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
       "read_user_timeline_server", {opentracing::ChildOf(parent_span->get())});
@@ -175,6 +219,10 @@ void UserTimelineHandler::ReadUserTimeline(
   if (stop <= start || start < 0) {
     return;
   }
+
+  sprintf(trace_point_text, "read_user_timeline_redis_find_client");
+  hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+  writer_text_map["baggage"] = hindsight_serialize();
 
   auto redis_span = opentracing::Tracer::Global()->StartSpan(
       "read_user_timeline_redis_find_client",
@@ -224,6 +272,10 @@ void UserTimelineHandler::ReadUserTimeline(
     bson_t *query = BCON_NEW("user_id", BCON_INT64(user_id));
     bson_t *opts = BCON_NEW("projection", "{", "posts", "{", "$slice", "[",
                             BCON_INT32(0), BCON_INT32(stop), "]", "}", "}");
+
+    sprintf(trace_point_text, "user_timeline_mongo_find_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
 
     auto find_span = opentracing::Tracer::Global()->StartSpan(
         "user_timeline_mongo_find_client",
@@ -297,6 +349,10 @@ void UserTimelineHandler::ReadUserTimeline(
       });
 
   if (redis_update_map.size() > 0) {
+    sprintf(trace_point_text, "user_timeline_redis_update_client");
+    hindsight_tracepoint(trace_point_text, sizeof(trace_point_text));
+    writer_text_map["baggage"] = hindsight_serialize();
+
     auto redis_update_span = opentracing::Tracer::Global()->StartSpan(
         "user_timeline_redis_update_client",
         {opentracing::ChildOf(&span->context())});
@@ -323,6 +379,8 @@ void UserTimelineHandler::ReadUserTimeline(
     LOG(error) << "Failed to get post from post-storage-service";
     throw;
   }
+  // TODO: Add Hindsight triggers
+  hindsight_end();
   span->Finish();
 }
 
