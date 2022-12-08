@@ -32,12 +32,16 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    command: ["ComposePostService"]
+    command: supervisord -c /etc/supervisor_conf/ComposePostService_supervisor.conf
     hostname: compose-post-service
-    image: deathstarbench/social-network-microservices:latest
+    image: dsbhsinteg:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 8192000000
 
   home-timeline-redis:
     depends_on:
@@ -58,12 +62,16 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    command: ["HomeTimelineService"]
+    command: supervisord -c /etc/supervisor_conf/HomeTimelineService_supervisor.conf
     hostname: home-timeline-service
-    image: deathstarbench/social-network-microservices:latest
+    image: dsbhsinteg:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 8192000000
 
   media-frontend:
     depends_on:
@@ -114,12 +122,16 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    command: ["MediaService"]
+    command: supervisord -c /etc/supervisor_conf/MediaService_supervisor.conf
     hostname: media-service
-    image: deathstarbench/social-network-microservices:latest
+    image: dsbhsinteg:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 8192000000
 
   nginx-web-server:
     depends_on:
@@ -175,12 +187,16 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    command: ["PostStorageService"]
+    command: supervisord -c /etc/supervisor_conf/PostStorageService_supervisor.conf
     hostname: post-storage-service
-    image: deathstarbench/social-network-microservices:latest
+    image: dsbhsinteg:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs: 
+          size: 8192000000
 
   social-graph-mongodb:
     depends_on:
@@ -214,12 +230,16 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    command: ["SocialGraphService"]
+    command: supervisord -c /etc/supervisor_conf/SocialGraphService_supervisor.conf
     hostname: social-graph-service
-    image: deathstarbench/social-network-microservices:latest
+    image: dsbhsinteg:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 8192000000
 
   text-service:
     depends_on:
@@ -229,31 +249,37 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    command: ["TextService"]
+    command: supervisord -c /etc/supervisor_conf/TextService_supervisor.conf
     hostname: text-service
-    image: deathstarbench/social-network-microservices:latest
-    volumes:
-      - ./config:/social-network-microservices/config
-      - ./keys:/keys
-
-  unique-id-service:
-    depends_on:
-      - jaeger-agent
-      - jaeger-query
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: any
-    command: supervisord -c /etc/supervisor_conf/UniqueIdService_supervisor.conf
-    hostname: unique-id-service
-    tmpfs:
-      - /tmp:size=8gb
     image: dsbhsinteg:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
       - type: tmpfs
         target: /dev/shm
+        tmpfs:
+          size: 8192000000
+
+  unique-id-service:
+    depends_on:
+      - jaeger-agent
+      - jaeger-query
+      - hindsight-collector
+      - hindsight-coordinator
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+    command: supervisord -c /etc/supervisor_conf/UniqueIdService_supervisor.conf
+    hostname: unique-id-service
+    image: dsbhsinteg:latest
+    volumes:
+      - ./config:/social-network-microservices/config
+      - ./keys:/keys
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 8192000000
 
   url-shorten-memcached:
     depends_on:
@@ -288,12 +314,17 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    command: ["UrlShortenService"]
+    command: supervisord -c /etc/supervisor_conf/UrlShortenService_supervisor.conf
     hostname: url-shorten-service
-    image: deathstarbench/social-network-microservices:latest
+    image: dsbhsinteg:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
+      - type: tmpfs
+        target: /dev/shm/
+        tmpfs:
+          size: 8192000000
+
 
   user-memcached:
     depends_on:
@@ -315,12 +346,16 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    command: ["UserMentionService"]
+    command: supervisord -c /etc/supervisor_conf/UserMentionService_supervisor.conf
     hostname: user-mention-service
-    image: deathstarbench/social-network-microservices:latest
+    image: dsbhsinteg:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 8192000000
 
   user-mongodb:
     depends_on:
@@ -343,12 +378,16 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    command: ["UserService"]
+    command: supervisord -c /etc/supervisor_conf/UserService_supervisor.conf
     hostname: user-service
-    image: deathstarbench/social-network-microservices:latest
+    image: dsbhsinteg:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 8192000000
 
   user-timeline-mongodb:
     depends_on:
@@ -381,11 +420,15 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    command: ["UserTimelineService"]
+    command: supervisord -c /etc/supervisor_conf/UserTimelineService_supervisor.conf
     hostname: user-timeline-service
-    image: deathstarbench/social-network-microservices:latest
+    image: dsbhsinteg:latest
     volumes:
       - ./config:/social-network-microservices/config
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 8192000000
 
   jaeger-collector:
     image: jaegertracing/jaeger-collector
@@ -435,12 +478,12 @@ services:
     ports:
       - 5252:5252
     command: supervisord -c /etc/coordinator.conf
-    tmpfs:
-      - /tmp:size=8gb
     volumes:
       - ./config:/social-network-microservices/config
       - type: tmpfs
         target: /dev/shm
+        tmpfs:
+          size: 8192000000
   
   hindsight-collector:
     image: hindsight_tracing:latest
@@ -449,12 +492,12 @@ services:
       - 5253:5253
     restart: always
     command: supervisord -c /etc/collector.conf
-    tmpfs:
-      - /tmp:size=8gb
     volumes:
       - ./config:/social-network-microservices/config
       - type: tmpfs
         target: /dev/shm
+        tmpfs:
+          size: 8192000000
 
 networks:
   default:
