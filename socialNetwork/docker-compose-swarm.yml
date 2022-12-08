@@ -244,12 +244,16 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    command: ["UniqueIdService"]
+    command: supervisord -c /etc/supervisor_conf/UniqueIdService_supervisor.conf
     hostname: unique-id-service
-    image: deathstarbench/social-network-microservices:latest
+    tmpfs:
+      - /tmp:size=8gb
+    image: dsbhsinteg:latest
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
+      - type: tmpfs
+        target: /dev/shm
 
   url-shorten-memcached:
     depends_on:
@@ -423,7 +427,34 @@ services:
 
   cassandra:
     image: cassandra:3.9
-    deploy:
+    deploy: 
+    
+  hindsight-coordinator:
+    image: hindsight_tracing:latest
+    hostname: hindsight-coordinator
+    ports:
+      - 5252:5252
+    command: supervisord -c /etc/coordinator.conf
+    tmpfs:
+      - /tmp:size=8gb
+    volumes:
+      - ./config:/social-network-microservices/config
+      - type: tmpfs
+        target: /dev/shm
+  
+  hindsight-collector:
+    image: hindsight_tracing:latest
+    hostname: hindsight-collector
+    ports:
+      - 5253:5253
+    restart: always
+    command: supervisord -c /etc/collector.conf
+    tmpfs:
+      - /tmp:size=8gb
+    volumes:
+      - ./config:/social-network-microservices/config
+      - type: tmpfs
+        target: /dev/shm
 
 networks:
   default:
