@@ -64,7 +64,7 @@ $ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-p
 
 ### Post-Install Steps
 ```
-$ sudo groupadd docker
+$ ssudo groupadd docker
 $ sudo usermod -aG docker $USER
 $ newgrp docker
 $ docker run hello-world
@@ -88,7 +88,7 @@ Change the `ExecStart `  command to have the `-g` flag which enables Docker to s
 ExecStart=/usr/bin/dockerd -g /users/vishwa/sdb/docker -H fd://
 $ sudo mkdir /new/path/to/docker
 $ sudo rsync -aqxP /var/lib/docker/ /new/path/docker
-$ sudo systemctl daemon-reload
+$ 
 $ sudo systemctl start docker
 ```
 
@@ -177,6 +177,13 @@ $ python3 scripts/init_social_graph.py --graph=socfb-Reed98
 
 I mostly use the `socfb-Reed98`, but use whatever. 
 
+## Stopping the DSB + HS cluster
+Run the following command in `socialNetwork` folder. 
+ 
+```
+$ docker compose down
+```
+
 - - - -
 ## Workload Generator
 There is an inbuilt workload generator for DSB developed by them under the `wrk2` folder in the `socialNetwork` repo. You can use it for generating load for the system. 
@@ -214,5 +221,37 @@ Get the IP by typing `ifconfig` and getting the interface of `ens1f0`.
 
 ```
 
+- - - -
+## Deploying DSB with Docker Swarm
+
+Basic concept is that there’s `master` and `worker` nodes. In DSB, we’ll have one master node and others will be worker nodes. 
+
+### Setting up the master node
+
+```
+$ docker swarm init --advertise-addr <MANAGER-IP>
+```
+
+When using Cloudlab, make sure that you run it on `node0`, with other nodes being the worker processes. More complex assignments with deploying services using node constraints will be done later. 
+
+### Setting up the worker nodes
+After setting up the master node, you will get a link for setting up the worker nodes. Those will be as follows
+
+```
+$ docker swarm join --token SWMTKN-1-3nlcxya9eya42798bt44cmb7f2zav8xrme5ddy61xzve0w4hmc-cinv0n915xa2649u0234ougxb 10.10.1.1:2377
+```
+
+Here `10.10.1.1` is the IP of `node0` in my cluster. Be careful with the IP of your system. Check it before using this command. 
+
+### Deploying the cluster
+
+```
+$ docker stack deploy --compose-file=docker-compose-swarm.yml <cluster-name>
+```
+
+### Bringing Cluster down
+```
+$ docker stack rm <cluster-name>
+```
 
 #projects/heimdall
