@@ -41,7 +41,7 @@ services:
     image: dsbhsinteg:latest
     hostname: compose-post-service
     ports:
-      - 5051:5050
+      - 5051:5051
     restart: always
     depends_on:
       jaeger-agent:
