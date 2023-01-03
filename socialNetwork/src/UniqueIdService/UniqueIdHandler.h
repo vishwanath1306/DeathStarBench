@@ -12,7 +12,7 @@
 #include "../../gen-cpp/social_network_types.h"
 #include "../logger.h"
 #include "../tracing.h"
-
+#include "../streaming-percentile/include/stmpct/gk.hpp"
 
 extern "C"{
     #include "tracer/agentapi.h"
@@ -70,6 +70,9 @@ UniqueIdHandler::UniqueIdHandler(std::mutex *thread_lock,
 int64_t UniqueIdHandler::ComposeUniqueId(
     int64_t req_id, PostType::type post_type,
     const std::map<std::string, std::string> &carrier) {
+  auto start_time = std::chrono::high_resolution_clock::now();
+  double epsilon = 0.1;
+  stmpct::gk<double> g(epsilon);
   // Initialize a span
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
@@ -133,6 +136,10 @@ int64_t UniqueIdHandler::ComposeUniqueId(
   // hindsight_trigger(req_id);
   hindsight_end();
   span->Finish();
+  auto elapsed_time = std::chrono::high_resolution_clock::now() - start_time;
+  double microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed_time).count();
+  std::cout<<"Latency is: "<<microseconds<<std::endl;
+  // g.insert(microserc);
   return post_id;
 }
 

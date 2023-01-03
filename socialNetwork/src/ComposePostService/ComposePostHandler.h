@@ -21,6 +21,7 @@
 #include "../ThriftClient.h"
 #include "../logger.h"
 #include "../tracing.h"
+#include "../streaming-percentile/include/stmpct/gk.hpp"
 
 extern "C"{
   #include "tracer/hindsight.h"
@@ -493,6 +494,9 @@ void ComposePostHandler::ComposePost(
     const std::string &text, const std::vector<int64_t> &media_ids,
     const std::vector<std::string> &media_types, const PostType::type post_type,
     const std::map<std::string, std::string> &carrier) {
+  auto start_time = std::chrono::high_resolution_clock::now();
+  double epsilon = 0.1;
+  stmpct::gk<double> g(epsilon);
   TextMapReader reader(carrier);
   auto parent_span = opentracing::Tracer::Global()->Extract(reader);
   auto span = opentracing::Tracer::Global()->StartSpan(
@@ -585,6 +589,14 @@ void ComposePostHandler::ComposePost(
   // }
   // TODO: Add hindsight triggers.
   // hindsight_trigger(req_id);
+
+  auto elapsed_time = std::chrono::high_resolution_clock::now() - start_time;
+  double microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed_time).count();
+  g.insert(microseconds);
+  if(g.quantile(0.99) > 10500){
+    std::cout<<"P99 latency is: "<<g.quantile(0.99)<<std::endl;
+    hindsight_trigger(req_id);
+  }
   hindsight_end();
   span->Finish();
 }
