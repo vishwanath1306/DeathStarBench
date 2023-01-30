@@ -88,7 +88,7 @@ Change the `ExecStart `  command to have the `-g` flag which enables Docker to s
 ExecStart=/usr/bin/dockerd -g /users/vishwa/sdb/docker -H fd://
 $ sudo mkdir /new/path/to/docker
 $ sudo rsync -aqxP /var/lib/docker/ /new/path/docker
-$ sudo systemctl daemon-reload
+$ 
 $ sudo systemctl start docker
 ```
 

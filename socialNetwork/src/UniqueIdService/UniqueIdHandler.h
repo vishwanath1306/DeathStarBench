@@ -81,8 +81,9 @@ int64_t UniqueIdHandler::ComposeUniqueId(
 
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
+  std::cout<<"Baggage in UniqueID: "<<(baggage_it->second).c_str()<<std::endl;
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }

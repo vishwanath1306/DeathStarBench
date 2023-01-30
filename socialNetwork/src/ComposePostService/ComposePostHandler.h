@@ -129,7 +129,7 @@ Creator ComposePostHandler::_ComposeCreaterHelper(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -184,7 +184,7 @@ TextServiceReturn ComposePostHandler::_ComposeTextHelper(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -240,7 +240,7 @@ std::vector<Media> ComposePostHandler::_ComposeMediaHelper(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -296,7 +296,7 @@ int64_t ComposePostHandler::_ComposeUniqueIdHelper(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -351,7 +351,7 @@ void ComposePostHandler::_UploadPostHelper(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -403,7 +403,7 @@ void ComposePostHandler::_UploadUserTimelineHelper(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -453,8 +453,9 @@ void ComposePostHandler::_UploadHomeTimelineHelper(
 
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
+  std::cout<<"Baggage in Write Home Timeline: "<<(baggage_it->second).c_str()<<std::endl;
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -509,8 +510,9 @@ void ComposePostHandler::ComposePost(
 
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
+  std::cout<<"Baggage string: "<<(baggage_it->second).c_str()<<std::endl;
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }

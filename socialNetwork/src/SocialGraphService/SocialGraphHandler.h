@@ -96,7 +96,7 @@ void SocialGraphHandler::Follow(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -312,7 +312,7 @@ void SocialGraphHandler::Unfollow(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -502,8 +502,9 @@ void SocialGraphHandler::GetFollowers(
 
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
+  std::cout<<"Baggage in Social Graph: "<<(baggage_it->second).c_str()<<std::endl;
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -666,7 +667,7 @@ void SocialGraphHandler::GetFollowees(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -836,7 +837,7 @@ void SocialGraphHandler::InsertUser(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -917,7 +918,7 @@ void SocialGraphHandler::FollowWithUsername(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -1010,7 +1011,7 @@ void SocialGraphHandler::UnfollowWithUsername(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }

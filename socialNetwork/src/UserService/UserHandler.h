@@ -133,7 +133,7 @@ void UserHandler::RegisterUserWithId(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -269,7 +269,7 @@ void UserHandler::RegisterUser(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -437,7 +437,7 @@ void UserHandler::ComposeCreatorWithUsername(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -628,7 +628,7 @@ void UserHandler::ComposeCreatorWithUserId(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -665,7 +665,7 @@ void UserHandler::Login(std::string &_return, int64_t req_id,
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
@@ -888,7 +888,7 @@ int64_t UserHandler::GetUserId(
   hindsight_begin(req_id);
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
