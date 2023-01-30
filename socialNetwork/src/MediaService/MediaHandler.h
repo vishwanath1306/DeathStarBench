@@ -47,7 +47,7 @@ void MediaHandler::ComposeMedia(
 
   auto baggage_it = carrier.find("baggage");
   if(baggage_it != carrier.end()){
-    hindsight_deserialize(strdup((baggage_it->second).c_str()));
+    hindsight_deserialize((char*)(baggage_it->second).c_str());
   }else{
     hindsight_breadcrumb(hindsight_serialize());
   }
