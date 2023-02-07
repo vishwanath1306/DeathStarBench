@@ -22,7 +22,7 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 # Actual hindsight install
 RUN mkdir /hindsight
 WORKDIR /hindsight
-RUN git clone https://gitlab.mpi-sws.org/cld/tracing/hindsight.git ; \
+RUN git clone https://github.com/vishwanath1306/hindsight-copy.git hindsight; \
     cd hindsight/client ; \
     make && make install; ldconfig ;\
     cd ../agent && go build -o agent cmd/agent2/main.go; \
